@@ -206,6 +206,7 @@
     <Compile Include="Helpers\StringUtils.cs" />
     <Compile Include="Helpers\UrlUtils.cs" />
     <Compile Include="Initialization\DependencyResolution.cs" />
+    <Compile Include="Initialization\ContentEventsHandler.cs" />
     <Compile Include="ISearchablePage.cs" />
     <Compile Include="ISearchIndex.cs" />
     <Compile Include="IWebPageParser.cs" />
