@@ -205,10 +205,9 @@
     <Compile Include="Helpers\ClassHelpers.cs" />
     <Compile Include="Helpers\StringUtils.cs" />
     <Compile Include="Helpers\UrlUtils.cs" />
-    <Compile Include="Initialization\DependencyResolution.cs" />
     <Compile Include="Initialization\ContentEventsHandler.cs" />
     <Compile Include="ISearchablePage.cs" />
-    <Compile Include="ISearchIndex.cs" />
+    <Compile Include="ISearchService.cs" />
     <Compile Include="IWebPageParser.cs" />
     <Compile Include="Models\AutocompleteSearchHit.cs" />
     <Compile Include="Models\EpiPage.cs" />
@@ -216,7 +215,7 @@
     <Compile Include="Models\SearchRequest.cs" />
     <Compile Include="Models\SearchResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SearchIndex.cs" />
+    <Compile Include="SearchService.cs" />
     <Compile Include="SimpleSearchScheduledJob.cs" />
     <Compile Include="WebPageParser.cs" />
   </ItemGroup>

@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
+using System.Web.Hosting;
 using DC.EPi.SimpleSearch.Filters;
 using DC.EPi.SimpleSearch.Helpers;
 using DC.EPi.SimpleSearch.Models;
 using EPiServer.Core;
 using EPiServer.Filters;
+using EPiServer.ServiceLocation;
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Documents;
@@ -19,14 +22,21 @@ using Version = Lucene.Net.Util.Version;
 
 namespace DC.EPi.SimpleSearch
 {
-    public class SearchIndex : ISearchIndex
+    [ServiceConfiguration(typeof(ISearchService))]
+    public class SearchService : ISearchService
     {
-        private readonly FSDirectory _luceneDirectory;
+        protected readonly FSDirectory _luceneDirectory;
         private readonly IWebPageParser _webPageParser;
         private readonly List<PageFilterBase> _pageFilters;
 
-        public SearchIndex(string filePath, IWebPageParser webPageParser)
+        public SearchService(IWebPageParser webPageParser)
         {
+            var filePath = ConfigurationManager.AppSettings["simplesearch_filepath"];
+            if (string.IsNullOrEmpty(filePath))
+            {
+                filePath = HostingEnvironment.MapPath("~/App_Data/simple_search/");
+            }
+
             _webPageParser = webPageParser;
 
             _luceneDirectory = FSDirectory.Open(filePath);
@@ -44,7 +54,7 @@ namespace DC.EPi.SimpleSearch
             };
         }
 
-        private IndexWriter GetIndexWriter()
+        protected IndexWriter GetIndexWriter()
         {
             var writer = new IndexWriter(_luceneDirectory,
                                          new StandardAnalyzer(Version.LUCENE_30),
@@ -62,25 +72,25 @@ namespace DC.EPi.SimpleSearch
             }
         }
 
-        public void IndexPage(PageData pageData)
+        public virtual void IndexPage(PageData pageData)
         {
             if (!ShouldIndexPage(pageData))
             {
                 return;
             }
-
-            var pageUrl = UrlUtils.GetExternalUrl(pageData.PageLink);
-            if (!string.IsNullOrEmpty(pageUrl))
-            {
-                var page = _webPageParser.GetPage(pageUrl);
-                page.InheritedTypes = pageData.GetType().GetBaseTypes();
-                page.ContentLink = pageData.ContentLink;
-                IndexDocumentWithoutCommit(page);
-            }
+            
+            var document = GetDefaultDocument(pageData);
+            IndexDocumentWithoutCommit(document);
         }
 
-        private static void CreateDocument(EpiPage epiPage, IndexWriter writer)
+        protected virtual Document GetDefaultDocument(PageData pageData)
         {
+            var pageUrl = UrlUtils.GetExternalUrl(pageData.PageLink);
+
+            var epiPage = _webPageParser.GetPage(pageUrl);
+            epiPage.InheritedTypes = pageData.GetType().GetBaseTypes();
+            epiPage.ContentLink = pageData.ContentLink;
+
             var document = new Document();
 
             document.Add(new Field("url", epiPage.PageUrl, Field.Store.YES, Field.Index.NOT_ANALYZED));
@@ -94,16 +104,15 @@ namespace DC.EPi.SimpleSearch
             }
             document.Add(new Field("page_id", epiPage.ContentLink.ID.ToString(), Field.Store.YES,
                                    Field.Index.NOT_ANALYZED));
-
-            writer.AddDocument(document);
-            writer.UpdateDocument(new Term("url", epiPage.PageUrl), document);
+            return document;
         }
 
-        public void IndexDocumentWithoutCommit(EpiPage epiPage)
+        public virtual void IndexDocumentWithoutCommit(Document document)
         {
             using (var writer = GetIndexWriter())
             {
-                CreateDocument(epiPage, writer);
+                writer.AddDocument(document);
+                writer.UpdateDocument(new Term("url", document.Get("url")), document);
             }
         }
 
@@ -257,7 +266,7 @@ namespace DC.EPi.SimpleSearch
             }
         }
 
-        private bool ShouldIndexPage(PageData page)
+        protected bool ShouldIndexPage(PageData page)
         {
             var searchablePage = page as ISearchablePage;
             if (searchablePage == null || searchablePage.ExcludeFromSearch)

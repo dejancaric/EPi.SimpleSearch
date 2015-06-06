@@ -10,7 +10,7 @@ namespace DC.EPi.SimpleSearch
     [ScheduledPlugIn(DisplayName = "SimpleSearch Scheduled Job")]
     public class SimpleSearchScheduledJob : JobBase
     {
-        private readonly ISearchIndex _searchIndex;
+        private readonly ISearchService _search;
         private readonly IContentRepository _contentRepository;
 
         private bool _stopSignaled;
@@ -20,7 +20,7 @@ namespace DC.EPi.SimpleSearch
         {
             IsStoppable = true;
 
-            _searchIndex = ServiceLocator.Current.GetInstance<ISearchIndex>();
+            _search = ServiceLocator.Current.GetInstance<ISearchService>();
             _contentRepository = ServiceLocator.Current.GetInstance<IContentRepository>();
         }
 
@@ -37,11 +37,11 @@ namespace DC.EPi.SimpleSearch
             try
             {
                 // delete all documents from index
-                _searchIndex.DeleteAll();
+                _search.DeleteAll();
 
                 // index start page
                 var startPage = _contentRepository.Get<PageData>(ContentReference.StartPage);
-                _searchIndex.IndexPage(startPage);
+                _search.IndexPage(startPage);
 
                 // index all child pages
                 IndexChildrenRecursively(startPage);
@@ -49,16 +49,16 @@ namespace DC.EPi.SimpleSearch
                 //For long running jobs periodically check if stop is signalled and if so stop execution
                 if (_stopSignaled)
                 {
-                    _searchIndex.Rollback();
+                    _search.Rollback();
                     return "Stop of job was called";
                 }
 
-                _searchIndex.Commit();
-                return string.Format("Successfully indexed {0} documents.", _searchIndex.GetNumberOfDocuments());
+                _search.Commit();
+                return string.Format("Successfully indexed {0} documents.", _search.GetNumberOfDocuments());
             }
             catch
             {
-                _searchIndex.Rollback();
+                _search.Rollback();
                 throw;
             }
         }
@@ -79,7 +79,7 @@ namespace DC.EPi.SimpleSearch
                     {
                         return;
                     }
-                    _searchIndex.IndexPage(child);
+                    _search.IndexPage(child);
                     IndexChildrenRecursively(child);
                 }
             }

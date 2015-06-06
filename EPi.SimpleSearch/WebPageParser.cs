@@ -4,10 +4,12 @@ using System.Net.Http;
 using System.Text;
 using DC.EPi.SimpleSearch.Helpers;
 using DC.EPi.SimpleSearch.Models;
+using EPiServer.ServiceLocation;
 using HtmlAgilityPack;
 
 namespace DC.EPi.SimpleSearch
 {
+    [ServiceConfiguration(typeof(IWebPageParser))]
     public class WebPageParser : IWebPageParser
     {
         public EpiPage GetPage(string pageUrl)

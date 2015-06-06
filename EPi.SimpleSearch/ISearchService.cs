@@ -4,7 +4,7 @@ using EPiServer.Core;
 
 namespace DC.EPi.SimpleSearch
 {
-    public interface ISearchIndex
+    public interface ISearchService
     {
         int GetNumberOfDocuments();
         void IndexPage(PageData page);

@@ -29,7 +29,7 @@ namespace DC.EPi.SimpleSearch.Initialization
             if (e.Content is PageData || e.Content is BlockData)
             {
                 var contentLoader = ServiceLocator.Current.GetInstance<IContentLoader>();
-                var searchService = ServiceLocator.Current.GetInstance<ISearchIndex>();
+                var searchService = ServiceLocator.Current.GetInstance<ISearchService>();
 
                 // re-index affected pages
                 var links = ServiceLocator.Current.GetInstance<ContentSoftLinkRepository>();
